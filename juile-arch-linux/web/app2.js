@@ -452,7 +452,10 @@ function openSettings(tab) {
   const modal = document.querySelector("#settingsModal"); modal.classList.remove("hidden");
   fetch("/api/settings").then((r) => r.json()).then((s) => {
     document.querySelector("#setInstr").value = s.instructions || ""; document.querySelector("#setTone").value = s.tone || ""; document.querySelector("#setMem").value = (s.memory || []).join("\n");
-    renderProviders2(s); renderMcp(s); renderSkills(); renderVoices(s);
+    try { renderProviders2(s); } catch (e) { console.error("providers render failed", e); }
+    try { renderMcp(s); } catch (e) { console.error("mcp render failed", e); }
+    try { renderSkills(); } catch (e) { console.error("skills render failed", e); }
+    try { renderVoices(s); } catch (e) { console.error("voices render failed", e); }
     const cl = document.querySelector("#connList"); cl.innerHTML = ""; (s.connectors || []).forEach((c) => {
       const row = el("div", "conn");
       const top = el("div", "conntop");
@@ -479,11 +482,23 @@ document.querySelector("#setSave").onclick = async () => {
   document.querySelector("#settingsModal").classList.add("hidden"); loadMemoryRail();
 };
 document.querySelector("#connAdd").onclick = async () => {
-  const name = document.querySelector("#connName").value.trim(), url = document.querySelector("#connUrl").value.trim(); if (!name || !url) return;
-  const cur = (await (await fetch("/api/settings")).json()).connectors || [];
-  cur.push({ name, url, header_name: document.querySelector("#connHName").value.trim(), header_value: document.querySelector("#connHVal").value.trim() });
-  await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectors: cur }) });
-  document.querySelector("#connName").value = document.querySelector("#connUrl").value = document.querySelector("#connHName").value = document.querySelector("#connHVal").value = ""; openSettings("conn");
+  const name = document.querySelector("#connName").value.trim(), url = document.querySelector("#connUrl").value.trim();
+  const msg = document.querySelector("#connMsg");
+  if (msg) { msg.className = "muted small"; msg.textContent = ""; }
+  if (!name || !url) { if (msg) { msg.className = "muted small bad"; msg.textContent = "Name and URL are both required."; } return; }
+  const btn = document.querySelector("#connAdd"); const label = btn.textContent; btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const cur = (await (await fetch("/api/settings")).json()).connectors || [];
+    cur.push({ name, url, header_name: document.querySelector("#connHName").value.trim(), header_value: document.querySelector("#connHVal").value.trim() });
+    const res = await fetch("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectors: cur }) });
+    if (!res.ok) throw new Error("server returned " + res.status);
+    document.querySelector("#connName").value = document.querySelector("#connUrl").value = document.querySelector("#connHName").value = document.querySelector("#connHVal").value = "";
+    openSettings("conn");
+  } catch (e) {
+    if (msg) { msg.className = "muted small bad"; msg.textContent = "Couldn't add connector: " + e.message; }
+  } finally {
+    btn.disabled = false; btn.textContent = label;
+  }
 };
 
 /* ---- conversation list (the greeting pill is the conversation switcher) ---- */
