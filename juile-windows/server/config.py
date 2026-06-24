@@ -56,6 +56,17 @@ PROVIDERS = {
         "models": ["sonnet", "opus", "haiku"],
         "models_api": False,
     },
+    "codex_cli": {
+        # "Account-Based": no API key. Shells out to the locally-installed OpenAI Codex
+        # CLI non-interactively (`codex exec`) using your existing ChatGPT login. Runs
+        # read-only-sandboxed; Juile owns the tools and Codex only picks the next action.
+        # See the dedicated "codex_cli" adapter in providers.py.
+        "label": "Codex (Account-Based)", "style": "codex_cli", "local": True,
+        "base_url": "",
+        "fields": [], "env": {},
+        "models": ["gpt-5.2-codex", "gpt-5.1-codex", "gpt-5-codex", "o4-mini"],
+        "models_api": False,
+    },
     "google": {
         "label": "Google AI Studio", "style": "openai",
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",

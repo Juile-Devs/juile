@@ -355,6 +355,31 @@ async def run_slides(args, emit):
     return f"Created a {n}-slide deck titled '{title or 'Untitled'}'. It's shown to the user."
 
 
+def _prune_for_model(messages, keep_full=8, cap=240):
+    """Token-frugal COPY of the transcript for sending to the model. Keeps the system
+    prompt and the most recent `keep_full` messages verbatim; older messages keep their
+    role + any tool_call ids (so tool pairing never breaks) but have their text content
+    truncated to `cap` chars. No message is dropped, so OpenAI-style providers stay valid.
+    Big usage win on long agentic loops, where the whole transcript is otherwise re-sent
+    (and re-billed) on every step."""
+    n = len(messages)
+    if n <= keep_full + 1:
+        return messages
+    out = []
+    for i, m in enumerate(messages):
+        if i == 0 or i >= n - keep_full:        # system prompt + recent window: verbatim
+            out.append(m)
+            continue
+        c = m.get("content")
+        if isinstance(c, str) and len(c) > cap:
+            trimmed = dict(m)
+            trimmed["content"] = c[:cap] + f"\n...[older context trimmed - {len(c) - cap} chars]"
+            out.append(trimmed)
+        else:
+            out.append(m)
+    return out
+
+
 async def run_agent(conversation, settings, emit, ask_permission, ask_user=None):
     provider = settings.get("provider", config.DEFAULT_PROVIDER)
     model = settings.get("model", config.DEFAULT_MODEL)
@@ -443,7 +468,7 @@ async def run_agent(conversation, settings, emit, ask_permission, ask_user=None)
                         await emit({"type": "token", "text": piece})
 
             try:
-                content, calls = await providers.complete(provider, model, messages, tools.TOOLS_SCHEMA, temperature, on_token)
+                content, calls = await providers.complete(provider, model, _prune_for_model(messages), tools.TOOLS_SCHEMA, temperature, on_token)
                 for kind, piece in splitter.flush():
                     if kind == "think":
                         await emit({"type": "think_token", "text": piece})

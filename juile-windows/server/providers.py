@@ -652,6 +652,100 @@ def _claude_err(code, stderr: str) -> str:
 # --------------------------------------------------------------------------- #
 # Public entry point
 # --------------------------------------------------------------------------- #
+CODEX_CLI_FLAGS = ["exec", "--skip-git-repo-check", "-s", "read-only"]
+
+
+def _codex_binary() -> str:
+    """Resolve the Codex CLI: a user-set path (store) over whatever is on PATH."""
+    import shutil
+    try:
+        from . import store
+        saved = (store.load().get("provider_keys") or {}).get("codex_cli") or {}
+    except Exception:
+        saved = {}
+    p = (saved.get("path") or "").strip()
+    if p and os.path.exists(p):
+        return p
+    return shutil.which("codex") or ""
+
+
+def _codex_err(code, stderr: str) -> str:
+    msg = (stderr or "").strip()[:500]
+    low = msg.lower()
+    if any(k in low for k in ("not logged in", "unauthorized", "log in", "login", "authenticate", "sign in")):
+        return "Codex CLI isn't logged in. Open a terminal, run `codex login`, sign in to your ChatGPT account, then try again."
+    return f"Codex CLI error (exit {code}): {msg or 'no output - is `codex` installed and logged in?'}"
+
+
+async def _codex_cli_complete(provider, model, messages, tools, temperature, on_token):
+    """Account-Based OpenAI Codex: shell out to `codex exec` (non-interactive) using the
+    user's ChatGPT login - no API key. Mirrors the Claude (Account-Based) adapter: Juile
+    feeds the system prompt + tool catalog + transcript, Codex returns the next action,
+    and Juile owns the real tools. Runs read-only-sandboxed so Codex can't act on its own."""
+    binary = _codex_binary()
+    if not binary:
+        raise RuntimeError(
+            "Codex CLI not found. Install it (npm i -g @openai/codex) and run `codex login` to "
+            "sign in to your ChatGPT account. You can also set its path in Settings -> Providers.")
+    prompt = _to_claude_cli_prompt(messages, tools)     # same generic CLI action protocol
+    import tempfile
+    tf = tempfile.NamedTemporaryFile("w+", suffix=".txt", delete=False, encoding="utf-8")
+    tf.close()
+    flags = list(CODEX_CLI_FLAGS) + ["-o", tf.name]
+    m = (model or "").strip()
+    if m:
+        flags += ["-m", m]
+    argv = (["cmd", "/c", binary] + flags) if os.name == "nt" else ([binary] + flags)
+
+    def _read_last() -> str:
+        try:
+            with open(tf.name, "r", encoding="utf-8", errors="ignore") as f:
+                return f.read().strip()
+        except Exception:
+            return ""
+        finally:
+            try:
+                os.remove(tf.name)
+            except Exception:
+                pass
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *argv, stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+    except NotImplementedError:                          # no async subprocess on this loop
+        def _blocking():
+            r = subprocess.run(argv, input=prompt, capture_output=True, text=True, timeout=900)
+            return r.returncode, r.stdout or "", r.stderr or ""
+        rc, out, err = await asyncio.to_thread(_blocking)
+        text = _read_last() or out.strip()
+        if rc and not text:
+            raise RuntimeError(_codex_err(rc, err))
+        if text:
+            await on_token(text)
+        return text, []
+
+    try:
+        proc.stdin.write(prompt.encode("utf-8", "ignore"))
+        await proc.stdin.drain()
+    except Exception:
+        pass
+    finally:
+        try:
+            proc.stdin.close()
+        except Exception:
+            pass
+    stdout_b = await proc.stdout.read()
+    err = (await proc.stderr.read()).decode("utf-8", "ignore")
+    await proc.wait()
+    text = _read_last() or stdout_b.decode("utf-8", "ignore").strip()
+    if proc.returncode and not text:
+        raise RuntimeError(_codex_err(proc.returncode, err))
+    if text:
+        await on_token(text)
+    return text, []
+
+
 async def complete(provider, model, messages, tools, temperature, on_token):
     """Streams content via on_token; returns (content, tool_calls)."""
     style = (config.PROVIDERS.get(provider) or {}).get("style", "openai")
@@ -663,4 +757,6 @@ async def complete(provider, model, messages, tools, temperature, on_token):
         return await _oneminai_complete(provider, model, messages, tools, temperature, on_token)
     if style == "claude_cli":
         return await _claude_cli_complete(provider, model, messages, tools, temperature, on_token)
+    if style == "codex_cli":
+        return await _codex_cli_complete(provider, model, messages, tools, temperature, on_token)
     return await _openai_complete(provider, model, messages, tools, temperature, on_token)
