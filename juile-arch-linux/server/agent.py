@@ -32,6 +32,21 @@ MODE_DIRECTIVE = {
 }
 
 
+MODE_DIRECTIVE["infinite"] = (
+    "MODE - INFINITE AGENTS: full autonomy with NO step limit. Keep working autonomously - "
+    "planning, acting, verifying, self-correcting, re-planning - until the ENTIRE job is genuinely, "
+    "completely done. Never stop early and never ask unless truly blocked. Periodically summarize "
+    "progress so the user can follow along. You may run for a very long time; that is expected."
+)
+
+SECTION_DIRECTIVE = {
+    "agent": "SECTION - AGENT: a capable, friendly conversational assistant. Chat naturally and use MCP connectors and everyday tools when they help, but stay light on heavy coding/ops unless asked.",
+    "work": "SECTION - WORK: get real work done end to end (documents, data, research, ops, automation). Be thorough and autonomous, like a senior operator who finishes the job.",
+    "code": "SECTION - CODE: a world-class software engineer for real coding sessions. Read before editing, make surgical changes, run and verify, and follow the project's existing conventions.",
+    "imagine": "SECTION - IMAGINE: focus on creative media - image, video, 3D and audio generation via the connected providers (Higgsfield, ElevenLabs, Meshy, local models).",
+}
+
+
 def _screen():
     try:
         import pyautogui
@@ -41,7 +56,7 @@ def _screen():
         return "unknown"
 
 
-def system_prompt(perm_mode: str, effort: str, imode: str = "agent", speed: str = "extended") -> str:
+def system_prompt(perm_mode: str, effort: str, imode: str = "agent", speed: str = "extended", section: str = "agent") -> str:
     # NOTE: deliberately NOT re-rendering tools.TOOL_SPECS (name+description+example
     # per tool) here. That info already rides along on every call as the native
     # function-calling schema (tools.TOOLS_SCHEMA) — duplicating it in plain text
@@ -55,6 +70,7 @@ and Higgsfield. Capable, calm, a little alive — a real presence, not a chatbot
 Permission: {perm_mode.upper()}. Effort: {effort.upper()}.
 {MODE_DIRECTIVE.get(imode, MODE_DIRECTIVE["agent"])}
 {SPEED_DIRECTIVE.get(speed, SPEED_DIRECTIVE["extended"])}
+{SECTION_DIRECTIVE.get(section, SECTION_DIRECTIVE["agent"])}
 
 # ACT — ONE TASK, GET IT DONE (this is the most important rule)
 Native tool calling — call a tool, the system runs it and returns the result, then you take the next step or give your
@@ -387,11 +403,14 @@ async def run_agent(conversation, settings, emit, ask_permission, ask_user=None)
     effort = settings.get("effort", "max")
     imode = settings.get("imode", "agent")
     speed = settings.get("speed", "extended")
+    section = settings.get("section", "agent")
     temperature = EFFORT_TEMP.get(effort, 0.6)          # effort -> execution intensity
     budget = SPEED_STEPS.get(speed, EFFORT_STEPS.get(effort, 26))   # speed -> step budget
     hard_cap = budget + (4 if speed == "instant" else 90)          # progress can extend it (except Instant)
 
-    messages = [{"role": "system", "content": system_prompt(perm_mode, effort, imode, speed)}] + conversation
+    if imode == "infinite":                              # Infinite Agents: self-driving for hours
+        budget, hard_cap = 9999, 99999
+    messages = [{"role": "system", "content": system_prompt(perm_mode, effort, imode, speed, section)}] + conversation
     seen = {}                                   # misc counters (e.g. the JSON-format retry)
     search_calls = {"composio": 0}
 

@@ -19,7 +19,7 @@ const GMAIL = `<svg viewBox="0 0 48 48"><path fill="#4caf50" d="M45 16.2l-5 4.8V
 const EFFORTS = ["low", "medium", "high", "extra", "max"];
 const EFFORT_LABELS = ["Low Effort", "Medium Effort", "High Effort", "Extra Effort", "Max Effort"];
 
-let settings = { provider: "openai", model: "", permission_mode: "ask", effort: "max", imode: "agent", speed: "extended" };
+let settings = { provider: "openai", model: "", permission_mode: "ask", effort: "max", imode: "agent", speed: "extended", section: "agent" };
 let cfg = null;
 let pendingAttachments = [];
 let ws = null;
@@ -511,7 +511,7 @@ function sendNow(text, atts, mode) {
   const sendText = mode ? (mode.prefix + " " + text).trim() : text;
   const cid = window.Convos ? Convos.activeId() : null;
   if (cid) { window._running = window._running || new Set(); window._running.add(cid); if (window.renderConvPanel) renderConvPanel(); }
-  send({ type: "chat", text: sendText, attachments: atts, provider: settings.provider, model: settings.model, permission_mode: settings.permission_mode, effort: settings.effort, imode: settings.imode, speed: settings.speed, conv_id: cid });
+  send({ type: "chat", text: sendText, attachments: atts, provider: settings.provider, model: settings.model, permission_mode: settings.permission_mode, effort: settings.effort, imode: settings.imode, speed: settings.speed, section: settings.section, conv_id: cid });
 }
 function enqueue(text, atts, mode) { queue.push({ text, atts, mode }); renderQueue(); }
 function renderQueue() {

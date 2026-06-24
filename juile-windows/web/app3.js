@@ -36,6 +36,7 @@ const IMODES = [
   { id: "question", label: "Question", title: "Question", desc: "Conversational — answers & asks, won't act unprompted" },
   { id: "executor", label: "Executor", title: "Executor", desc: "Executes literally — no planning, no chatter" },
 ];
+IMODES.splice(1, 0, { id: "infinite", label: "Infinite Agents", title: "Infinite Agents", desc: "Self-driving: keeps working autonomously for hours until the whole job is truly done" });
 function setIMode(id) { settings.imode = id; const m = IMODES.find((x) => x.id === id) || IMODES[0]; const l = document.querySelector("#imodeLabel"); if (l) l.textContent = m.label; send({ type: "settings", imode: id }); }
 wireMenu("#imodeChip", "#modeMenu", (menu) => {
   menu.innerHTML = `<div class="pmhead">Interaction mode</div>`;
@@ -54,6 +55,30 @@ wireMenu("#speedChip", "#speedMenu", (menu) => {
   menu.innerHTML = `<div class="pmhead">Speed</div>`;
   SPEEDS.forEach((o) => menu.appendChild(popItem(o, settings.speed, (x) => setSpeed(x.id))));
 });
+
+/* ---- top sections nav (One / Imagine / Agent / Work / Code) ---- */
+let _toastTimer;
+function toast(msg) {
+  const t = document.querySelector("#toast"); if (!t) return;
+  t.textContent = msg; t.classList.remove("hidden");
+  requestAnimationFrame(() => t.classList.add("show"));
+  clearTimeout(_toastTimer); _toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+(function () {
+  const nav = document.querySelector("#topnav"); if (!nav) return;
+  const COMING = { one: true };
+  let cur = localStorage.getItem("juile.section") || "agent";
+  if (COMING[cur]) cur = "agent";
+  function paint() { nav.querySelectorAll(".navsec").forEach((b) => b.classList.toggle("sel", b.dataset.sec === cur)); }
+  function pick(sec) {
+    if (COMING[sec]) { toast("This feature is coming soon"); return; }
+    cur = sec; localStorage.setItem("juile.section", sec);
+    settings.section = sec; if (typeof send === "function") send({ type: "settings", section: sec });
+    paint();
+  }
+  nav.querySelectorAll(".navsec").forEach((b) => (b.onclick = () => pick(b.dataset.sec)));
+  settings.section = cur; paint();
+})();
 
 /* ---- Agents View (left arrow): list agents/conversations, click to open, type to summon ---- */
 let agentsOpen = false;
