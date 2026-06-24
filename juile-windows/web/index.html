@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Juile</title>
+  <link rel="icon" type="image/png" href="/logo.png?v=9" />
+  <link rel="apple-touch-icon" href="/logo.png?v=9" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700;800&family=Young+Serif&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css?v=9" />
+  <link rel="stylesheet" href="/styles2.css?v=9" />
+  <link rel="stylesheet" href="/styles3.css?v=9" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <!-- warm gradient background + soft glows -->
+  <div class="bg" aria-hidden="true"><span class="glow g1"></span><span class="glow g2"></span><span class="glow g3"></span></div>
+
+  <!-- left conversation sidebar -->
+  <aside id="convPanel">
+    <div class="cpHead"><span>Conversations</span><button id="cpClose" class="x">✕</button></div>
+    <button id="cpNew" class="cpNew">+ New conversation</button>
+    <div id="convPanelList"></div>
+  </aside>
+
+  <!-- top-left: new conversation + conversations list + title -->
+  <header id="topbar">
+    <button class="tlbtn" id="iconPlus" title="New conversation"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+    <button class="tlbtn" id="greetingPill" title="Conversations">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <div id="greetingText" class="convtitle">Juile</div>
+  </header>
+
+  <!-- center presence + transcript (fades into the orbs) -->
+  <main id="stage">
+    <div id="transcript"></div>
+    <div id="circles"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></div>
+    <div id="greeting">Let's brainstorm</div>
+  </main>
+
+  <!-- composer -->
+  <div id="composer">
+    <div id="attachments"></div>
+    <div id="imgPreview" class="hidden"></div>
+    <div id="jstatus" class="hidden"></div>
+    <div id="queue"></div>
+
+    <!-- floating menus (open upward, liquid glass) -->
+    <div id="cmdMenu" class="hidden"></div>
+    <div id="plusMenu" class="hidden"></div>
+    <div id="ghMenu" class="popmenu hidden"></div>
+    <div id="localMenu" class="popmenu hidden"></div>
+    <div id="modeMenu" class="popmenu hidden"></div>
+    <div id="speedMenu" class="popmenu hidden"></div>
+    <div id="effortMenu" class="popmenu hidden">
+      <div class="dd-title">Reasoning effort</div>
+      <input type="range" min="0" max="4" step="1" value="4" id="effortSlider" />
+      <div class="dd-scale"><span>Low</span><span>Medium</span><span>High</span><span>Extra</span><span>Max</span></div>
+      <div class="dd-title">Permission</div>
+      <div class="dd-opt" data-perm="bypass"><svg viewBox="0 0 24 24"><polygon points="13 2 4 14 11 14 11 22 20 10 13 10 13 2"/></svg><span>Act without asking</span><span class="ck" id="ckBypass">●</span></div>
+      <div class="dd-opt" data-perm="ask"><svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg><span>Ask before doing</span><span class="ck" id="ckAsk"></span></div>
+    </div>
+    <div id="askMenu" class="hidden"></div>
+    <div id="permMenu" class="hidden"></div>
+
+    <div class="cbox">
+      <!-- context bar: GitHub repo / Local folder / Remote control -->
+      <div id="ctxBar">
+        <button class="cchip" id="ghChip" title="GitHub access">
+          <svg viewBox="0 0 24 24" class="i-branch"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="7.5" r="2.4"/><path d="M6 8.4v7.2M8.2 6.6h4.2a3 3 0 0 1 3 3v.4"/></svg>
+          <span id="ghChipText">Connect GitHub</span>
+        </button>
+        <button class="cchip" id="localChip" title="Local folder focus">
+          <svg viewBox="0 0 24 24" class="i-local"><rect x="3" y="4" width="18" height="12" rx="1.6"/><path d="M2 20h20"/></svg>
+          <span id="localChipText">Local</span>
+        </button>
+        <span class="cchip status" id="remoteChip" title="Phone ↔ PC link">
+          <span class="rdot"></span><b id="remoteState">(Offline)</b>&nbsp;Remote Control
+        </span>
+      </div>
+
+      <!-- agents view (replaces the input row when toggled) -->
+      <div id="agentsView" class="hidden"></div>
+
+      <!-- input row -->
+      <div id="inputBar">
+        <button class="plus" id="addBtn" title="More"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <textarea id="input" rows="1" placeholder="Ask Juile..."></textarea>
+        <button class="send" id="sendBtn" title="Send"></button>
+      </div>
+
+      <!-- meta row: model / effort / permission -->
+      <div id="metaRow">
+        <button class="mchip model" id="modelChip"><b>OpenAI</b> <span id="modelName">…</span></button>
+        <span class="mdot"></span>
+        <button class="mchip" id="effortPill"><svg viewBox="0 0 24 24" class="i-bulb"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.4 1 2.5h6c0-1.1.2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg><span id="effortLabel">Max Effort</span></button>
+        <span class="mdot"></span>
+        <button class="mchip" id="permChip"><svg viewBox="0 0 24 24" class="i-perm"><path d="M5 12h13M12 6l6 6-6 6"/></svg><span id="permChipText">Ask before doing</span></button>
+      </div>
+
+      <!-- mode row: agents view / interaction mode / speed -->
+      <div id="modeRow">
+        <button class="mchip" id="agentsBtn"><svg viewBox="0 0 24 24" class="i-agents"><path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 2c-3 0-5 1.5-5 3.5V18h10v-1.5C14 14.5 12 13 9 13zm8-2a2.5 2.5 0 1 0 0-5"/></svg><span>Agents View</span> <i>(left arrow)</i></button>
+        <button class="mchip" id="imodeChip"><svg viewBox="0 0 24 24" class="i-mode"><path d="M3 6h18M3 12h18M3 18h12"/></svg><span id="imodeLabel">Agent Mode</span></button>
+        <button class="mchip" id="speedChip"><svg viewBox="0 0 24 24" class="i-speed"><path d="M12 3a9 9 0 1 0 9 9h-2M12 12l5-3"/></svg><span id="speedLabel">Extended</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom-left: settings + activity -->
+  <div id="bottomLeft">
+    <button class="blbtn" id="iconTune" title="Settings"><svg viewBox="0 0 24 24"><line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4"/></svg></button>
+    <button class="blbtn" id="iconShare" title="Activity log"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="18" cy="18" r="2.3"/><line x1="8" y1="11" x2="16" y2="7"/><line x1="8" y1="13" x2="16" y2="17"/></svg></button>
+  </div>
+
+  <input type="file" id="fileInput" multiple hidden />
+
+  <div id="modelPanel" class="panel hidden">
+    <div class="panel-head">Models<button class="x" data-close="modelPanel">✕</button></div>
+    <div id="providerList"></div>
+    <div class="panel-sub">Models</div>
+    <div id="modelList"></div>
+    <div class="panel-sub">Settings</div>
+    <div class="opt" id="ttsToggle"><span>Speak replies (neural voice)</span><span class="badge" id="ttsState">off</span></div>
+    <div class="opt" id="sfxToggle"><span>Sound effects</span><span class="badge on" id="sfxState">on</span></div>
+    <div class="opt" id="phoneOpt"><span>Open on phone</span><span class="badge">QR</span></div>
+  </div>
+
+  <aside id="logPanel" class="hidden">
+    <div class="panel-head">Activity<button class="x" data-close="logPanel">✕</button></div>
+    <div id="logItems"></div>
+  </aside>
+
+  <div id="phonePanel" class="panel hidden">
+    <div class="panel-head">Open on your phone<button class="x" data-close="phonePanel">✕</button></div>
+    <p class="muted">Same Wi-Fi as this PC, then scan or type:</p>
+    <img id="qr" src="/qr.png" alt="QR" /><code id="lanUrl">…</code>
+  </div>
+
+  <!-- settings modal -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><span>Settings</span><button class="x" data-close="settingsModal">✕</button></div>
+      <div class="setrow">
+      <div class="tabs">
+        <button class="tab sel" data-tab="providers">Providers</button>
+        <button class="tab" data-tab="conn">Connectors</button>
+        <button class="tab" data-tab="instr">Instructions</button>
+        <button class="tab" data-tab="tone">Voice &amp; tone</button>
+        <button class="tab" data-tab="mem">Memory</button>
+        <button class="tab" data-tab="skills">Skills</button>
+        <button class="tab" data-tab="qr">QR Code</button>
+      </div>
+      <div class="setpanes">
+
+      <div class="tabpane" data-pane="providers">
+        <p class="muted small">Bring your own key. Connect any provider — keys are stored locally on this PC and never leave it.</p>
+        <div id="provForm"></div>
+      </div>
+
+      <div class="tabpane hidden" data-pane="conn">
+        <p class="muted small">Connect Juile to your tools. Keys stay local. Use <b>Auth</b> to sign in / verify a connector on the spot.</p>
+        <div id="mcpForm"></div>
+        <div class="panel-sub">Custom MCP server</div>
+        <input id="connName" placeholder="Name (e.g. notion)" />
+        <input id="connUrl" placeholder="https://mcp.example.com/..." />
+        <input id="connHName" placeholder="Header name (optional)" />
+        <input id="connHVal" placeholder="Header value (optional)" />
+        <button id="connAdd" class="primary">Add connector</button>
+        <div id="connList"></div>
+      </div>
+
+      <div class="tabpane hidden" data-pane="instr">
+        <p class="muted small">Custom instructions for how Juile should behave.</p>
+        <textarea id="setInstr" rows="8" placeholder="e.g. Always be concise. Prefer Python. Call me by my name."></textarea>
+      </div>
+      <div class="tabpane hidden" data-pane="tone">
+        <p class="muted small">How Juile talks — and the voice it speaks in.</p>
+        <div class="panel-sub">Spoken voice</div>
+        <div id="voicePicker" class="voicegrid"></div>
+        <div class="panel-sub">Writing tone</div>
+        <textarea id="setTone" rows="5"></textarea>
+      </div>
+      <div class="tabpane hidden" data-pane="mem">
+        <p class="muted small">What Juile remembers about you. One per line.</p>
+        <textarea id="setMem" rows="10" placeholder="One memory per line"></textarea>
+      </div>
+      <div class="tabpane hidden" data-pane="skills">
+        <p class="muted small">Juile's skill playbooks — add your own and Juile uses them instantly (type / in chat).</p>
+        <input id="skillName" placeholder="skill-name (kebab-case)" />
+        <textarea id="skillBody" rows="6" placeholder="# Title&#10;Steps Juile should follow..."></textarea>
+        <button id="skillAdd" class="primary">Add skill</button>
+        <div class="panel-sub">Installed skills</div>
+        <input id="skillSearch" placeholder="Search skills..." />
+        <div id="skillList" style="max-height:240px;overflow:auto"></div>
+      </div>
+      <div class="tabpane hidden" data-pane="qr" style="text-align:center">
+        <img id="qr2" src="/qr.png" alt="QR" style="width:200px;background:#fff;border-radius:10px;padding:8px" />
+        <code id="lanUrl2" style="display:block;margin-top:10px"></code>
+      </div>
+      </div></div>
+      <div class="modal-foot"><button id="setSave" class="primary">Save</button></div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=9"></script>
+  <script src="/app2.js?v=9"></script>
+  <script src="/app3.js?v=9"></script>
+</body>
+</html>

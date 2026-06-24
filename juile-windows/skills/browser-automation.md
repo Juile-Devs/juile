@@ -1,0 +1,2 @@
+# Automate the browser (computer use)
+open_app the URL, screenshot, then click/type with the computer tool. Use key_down/key_up to hold modifiers; window to focus/snap. Re-screenshot to verify each step. Never auto-submit irreversible forms without OK.

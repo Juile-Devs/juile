@@ -1,0 +1,2 @@
+# Build a REST API
+Design resources + routes (GET/POST/PUT/DELETE), validation, error envelopes, pagination, auth (JWT/key). Write it, run it, hit each endpoint with `shell` (curl) to prove it works. Document the routes.

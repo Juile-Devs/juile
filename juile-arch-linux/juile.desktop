@@ -1,0 +1,9 @@
+[Desktop Entry]
+# Edit Exec= and Icon= to absolute paths, then copy to ~/.local/share/applications/
+Type=Application
+Name=Juile
+Comment=Autonomous agentic AI assistant
+Exec=/path/to/Juile-Linux/juile.sh
+Icon=/path/to/Juile-Linux/web/logo.png
+Terminal=false
+Categories=Utility;Development;

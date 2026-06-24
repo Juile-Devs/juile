@@ -1,0 +1,238 @@
+/* =====================================================================
+   JUILE — warm "sunset" redesign (loads last; overrides the blue theme).
+   Centered presence layout, redesigned composer, liquid-glass menus.
+   ===================================================================== */
+:root{
+  --txt:#fff; --soft:rgba(255,255,255,.9); --muted:rgba(255,255,255,.66);
+  --glass:rgba(255,255,255,.18); --glassH:rgba(255,255,255,.30); --glass2:rgba(255,255,255,.12);
+  --line:rgba(255,255,255,.34); --line2:rgba(255,255,255,.18);
+  --accent:#ec7a5b; --accent2:#e6a85f; --good:#8fd17a; --bad:#ff8a7a;
+  --shadow:0 22px 60px rgba(120,60,30,.34);
+  --serif:'Young Serif',Georgia,'Times New Roman',serif;
+}
+body{
+  background:#dca96d;
+  font-family:'Instrument Sans',-apple-system,"Segoe UI",Inter,system-ui,sans-serif;
+}
+.rays{display:none}                     /* old blue rays removed */
+
+/* warm diagonal gradient + drifting glows */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:
+    radial-gradient(115% 100% at 86% 6%,#dd7257 0%,rgba(221,114,87,0) 52%),
+    radial-gradient(120% 120% at 4% 102%,#cbd07a 0%,rgba(203,208,122,0) 56%),
+    linear-gradient(146deg,#df8a61 0%,#e2a76d 38%,#d8c173 70%,#c8cf7c 100%);}
+.bg .glow{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;mix-blend-mode:screen;animation:drift 22s ease-in-out infinite}
+.bg .g1{width:46vw;height:46vw;top:-12%;right:-6%;background:radial-gradient(circle,#f0a07a,transparent 65%)}
+.bg .g2{width:42vw;height:42vw;bottom:-14%;left:-8%;background:radial-gradient(circle,#e7e08a,transparent 65%);animation-delay:-7s}
+.bg .g3{width:34vw;height:34vw;top:42%;left:48%;background:radial-gradient(circle,#f2b48f,transparent 68%);opacity:.35;animation-delay:-13s}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(3%,4%)}}
+#stage,#composer,#topbar,#bottomLeft,#convPanel{position:relative;z-index:2}
+
+/* ============ top-left controls + conversation title ============ */
+#topbar{position:fixed;top:20px;left:22px;z-index:6;display:flex;align-items:center;gap:12px}
+.tlbtn{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#fff;
+  background:rgba(255,255,255,.16);border:1px solid var(--line2);backdrop-filter:blur(20px) saturate(1.4);
+  box-shadow:0 8px 22px rgba(120,60,30,.22);transition:background .15s,transform .12s}
+.tlbtn:hover{background:rgba(255,255,255,.3)}
+.tlbtn svg{width:21px;height:21px;fill:none;stroke:#fff;stroke-width:2.1;stroke-linecap:round}
+#topbar #greetingPill{padding:0}
+.convtitle{font-family:var(--serif);font-size:30px;font-weight:400;color:#fff;letter-spacing:.2px;
+  text-shadow:0 2px 14px rgba(110,50,20,.3);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px}
+body:not(.chatting) .convtitle{opacity:0;pointer-events:none}
+
+/* ============ bottom-left utility icons ============ */
+#bottomLeft{position:fixed;left:24px;bottom:22px;z-index:6;display:flex;gap:16px}
+.blbtn{width:24px;height:24px;color:rgba(60,30,18,.7)}
+.blbtn:hover{color:#3a1e10}
+.blbtn svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.blbtn svg circle{fill:currentColor;stroke:none}
+
+/* ============ center stage: transcript fades into the orbs ============ */
+#stage{position:fixed;left:0;right:0;top:74px;bottom:236px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;pointer-events:none}
+#transcript{pointer-events:auto;width:min(720px,92vw);max-height:100%;overflow-y:auto;
+  display:flex;flex-direction:column;gap:14px;padding:8px 4px 30px;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 70px),transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 70px),transparent 100%);
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.4) transparent}
+#transcript::-webkit-scrollbar{width:7px}
+#transcript::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:6px}
+
+/* presence orbs — centered, shift down + shrink while chatting */
+#circles{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:46px;height:300px;z-index:1;
+  transition:top .6s cubic-bezier(.2,.85,.3,1),transform .6s cubic-bezier(.2,.85,.3,1)}
+.circle{width:108px;height:108px;border-radius:54px;background:#fff;flex:none;will-change:height;transition:height .07s ease-out;
+  box-shadow:0 14px 50px rgba(255,240,225,.4),inset 0 -8px 22px rgba(255,200,150,.4),inset 0 7px 16px rgba(255,255,255,.85)}
+body.chatting #circles{top:64%;transform:translate(-50%,-50%) scale(.52);opacity:.92}
+@media (max-height:760px){body.chatting #circles{top:60%;transform:translate(-50%,-50%) scale(.42)}}
+
+/* empty-state greeting (Young Serif, under the orbs) */
+#greeting{position:fixed;left:50%;top:calc(40% + 175px);transform:translateX(-50%);z-index:2;
+  font-family:var(--serif);font-size:46px;color:#fff;text-shadow:0 3px 22px rgba(110,50,20,.34);
+  pointer-events:none;transition:opacity .4s}
+body.chatting #greeting{opacity:0}
+
+/* ============ messages ============ */
+.msg.user{align-self:flex-end;background:linear-gradient(180deg,#ef8467,#e36f54);border:1px solid rgba(255,255,255,.28);
+  color:#fff;padding:10px 16px;border-radius:18px 18px 6px 18px;max-width:80%;font-size:15px;line-height:1.5;
+  box-shadow:0 8px 22px rgba(150,60,40,.32);backdrop-filter:none}
+.msg.user .umtext{white-space:pre-wrap}
+.msg.juile{align-self:flex-start;width:100%}
+.msg.juile pre.live{white-space:pre-wrap;font:16px/1.6 'Instrument Sans',sans-serif;margin:0;color:#fff;text-shadow:0 1px 10px rgba(110,50,20,.25)}
+.md{color:#fff}
+.note{color:rgba(255,255,255,.78)}
+.msgact:hover{background:rgba(255,255,255,.2)}
+
+/* ============ composer ============ */
+#composer{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(720px,94vw);z-index:5}
+#composer #jstatus{margin:0 4px 10px}
+#composer #queue:not(:empty){margin-bottom:10px}
+.cbox{border-radius:28px;padding:14px 16px 13px;position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.14));
+  backdrop-filter:blur(40px) saturate(1.7);-webkit-backdrop-filter:blur(40px) saturate(1.7);
+  border:1px solid rgba(255,255,255,.4);
+  box-shadow:0 26px 70px rgba(120,55,25,.34),inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.16)}
+
+/* context bar */
+#ctxBar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 2px 11px;font-size:13px}
+.cchip{display:inline-flex;align-items:center;gap:7px;color:rgba(255,255,255,.92);font-weight:600;
+  background:none;border:none;padding:2px 2px;border-radius:9px;transition:opacity .12s}
+.cchip:hover{opacity:.78}
+.cchip svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.cchip svg circle{fill:#fff;stroke:none}
+.cchip.status{cursor:default}
+.cchip .rdot{width:8px;height:8px;border-radius:50%;background:#9aa0a6;box-shadow:0 0 0 0 rgba(143,209,122,.6)}
+.cchip.online .rdot{background:var(--good);animation:rpulse 1.6s infinite}
+.cchip.online b{color:#eafff0}
+@keyframes rpulse{0%{box-shadow:0 0 0 0 rgba(143,209,122,.55)}70%{box-shadow:0 0 0 7px rgba(143,209,122,0)}}
+.cchip.set svg{stroke:#fff}
+.cchip.set #ghChipText,.cchip.set #localChipText{color:#fff}
+
+/* input row */
+#inputBar{display:flex;align-items:center;gap:10px;min-height:44px;background:none;border:none;
+  box-shadow:none;padding:4px 2px;overflow:visible}
+#inputBar::before,#inputBar::after{display:none}
+.liquid,.waves{display:none}
+#input{flex:1;background:none;border:none;outline:none;resize:none;color:#fff;
+  font:18px/1.45 'Instrument Sans',sans-serif;max-height:140px;padding:4px 0;text-shadow:0 1px 6px rgba(110,50,20,.22)}
+#input::placeholder{color:rgba(255,255,255,.74)}
+.plus{width:30px;height:30px;flex:none;display:grid;place-items:center}
+.plus svg{width:25px;height:25px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;filter:drop-shadow(0 1px 2px rgba(110,50,20,.3))}
+.plus:hover{transform:scale(1.12)}
+.send{width:46px;height:46px;flex:none;border-radius:50%;background:#fff;display:grid;place-items:center;
+  box-shadow:0 6px 18px rgba(120,55,25,.4);transition:transform .12s,box-shadow .15s}
+.send svg{width:20px;height:20px}
+.send.arrow svg{transform:rotate(45deg);margin-left:-2px}
+.send.arrow svg path{fill:#1f2533}
+.send.stop svg rect{fill:#1f2533}
+.send:hover{transform:scale(1.08);box-shadow:0 8px 22px rgba(120,55,25,.5)}
+.micbtn{width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:rgba(255,255,255,.2);border:1px solid var(--line2);transition:background .15s}
+.micbtn svg{width:19px;height:19px;stroke:#fff;fill:none;stroke-width:1.9}
+.micbtn:hover{background:rgba(255,255,255,.34)}
+.micbtn.rec{background:#ef5350;border-color:#ef5350;animation:micpulse 1.1s infinite}
+.micbtn.rec svg{stroke:#fff}
+
+/* meta + mode rows */
+#metaRow,#modeRow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:0 2px}
+#metaRow{margin-top:9px}
+#modeRow{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.2)}
+.mchip{display:inline-flex;align-items:center;gap:7px;color:rgba(255,255,255,.92);font-size:13px;font-weight:600;
+  background:none;border:none;padding:2px 2px;border-radius:8px;transition:opacity .12s}
+.mchip:hover{opacity:.75}
+.mchip svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mchip.model b{font-weight:800;color:#fff}
+.mchip.model span{color:rgba(255,255,255,.72);font-weight:500}
+.mchip #effortLabel,.mchip #permChipText,.mchip #imodeLabel,.mchip #speedLabel{font-weight:700}
+.mchip i{font-style:normal;color:rgba(255,255,255,.6);font-weight:500}
+.mdot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.45);flex:none}
+#agentsBtn{margin-right:auto}
+
+/* ============ agents view (replaces input when toggled) ============ */
+#agentsView{display:flex;flex-direction:column;gap:2px;margin:2px 0 6px;max-height:230px;overflow-y:auto}
+.agentrow{display:flex;align-items:center;gap:11px;padding:9px 8px;border-radius:12px;cursor:pointer;transition:background .14s}
+.agentrow:hover{background:rgba(255,255,255,.16)}
+.agentrow .aglyph{width:20px;height:20px;flex:none;display:grid;place-items:center}
+.agentrow .aglyph svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:1.8}
+.agentrow .agname{font-weight:700;color:#fff;font-size:14.5px}
+.agentrow .agstatus{margin-left:auto;font-size:12.5px;color:rgba(255,255,255,.62);font-weight:500}
+.agentrow.working .aglyph svg{animation:spin 2.4s linear infinite}
+.agentrow.done .agstatus{color:#eafff0;font-weight:700}
+.agentrow.asking .agstatus{color:#fff;font-weight:700}
+.agentempty{color:rgba(255,255,255,.7);font-size:13px;padding:10px 8px}
+
+/* ============ liquid-glass popup menus (open upward) ============ */
+.popmenu{position:absolute;bottom:calc(100% + 10px);left:8px;min-width:248px;max-width:340px;z-index:40;
+  background:linear-gradient(165deg,rgba(255,255,255,.26),rgba(255,255,255,.12));
+  backdrop-filter:blur(36px) saturate(1.8);-webkit-backdrop-filter:blur(36px) saturate(1.8);
+  border:1px solid rgba(255,255,255,.42);border-radius:18px;padding:8px;
+  box-shadow:0 26px 60px rgba(120,55,25,.4),inset 0 1px 0 rgba(255,255,255,.5);animation:popup .18s cubic-bezier(.2,.9,.3,1)}
+@keyframes popup{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.popmenu.r{left:auto;right:8px}
+.popmenu .pmhead{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.7);padding:8px 10px 6px;font-weight:700}
+.popitem{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;transition:background .12s}
+.popitem:hover{background:rgba(255,255,255,.2)}
+.popitem.sel{background:rgba(255,255,255,.26)}
+.popitem .pi-ic{width:20px;height:20px;flex:none;margin-top:1px;display:grid;place-items:center}
+.popitem .pi-ic svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:1.9}
+.popitem .pi-main{flex:1;min-width:0}
+.popitem .pi-t{font-weight:700;font-size:13.5px;color:#fff}
+.popitem .pi-d{font-size:12px;color:rgba(255,255,255,.72);margin-top:2px;line-height:1.35}
+.popitem .pi-ck{margin-left:auto;color:#fff;font-size:13px;align-self:center}
+.popmenu input.pminput{width:100%;background:rgba(255,255,255,.16);border:1px solid var(--line2);border-radius:11px;
+  padding:9px 11px;color:#fff;font:inherit;margin:4px 0 6px;outline:none}
+.popmenu input.pminput::placeholder{color:rgba(255,255,255,.6)}
+.popmenu .pmbtn{width:100%;background:#fff;color:#7a3a22;font-weight:700;border-radius:11px;padding:10px;margin-top:4px}
+
+/* effort menu reuses popmenu; keep its slider readable */
+#effortMenu .dd-title{color:rgba(255,255,255,.7);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin:8px 6px}
+#effortMenu #effortSlider{width:calc(100% - 12px);margin:0 6px;accent-color:#fff}
+#effortMenu .dd-scale{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,.6);margin:4px 6px 6px}
+#effortMenu .dd-opt{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;cursor:pointer;font-size:13px}
+#effortMenu .dd-opt:hover{background:rgba(255,255,255,.2)}
+#effortMenu .dd-opt svg{width:18px;height:18px;fill:currentColor;flex:none}
+#effortMenu .dd-opt .ck{margin-left:auto}
+
+/* command menu + plus menu reposition above the composer */
+#cmdMenu,#plusMenu{position:absolute;bottom:calc(100% + 10px);left:8px}
+#plusMenu{background:linear-gradient(165deg,rgba(255,255,255,.26),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.42);box-shadow:0 26px 60px rgba(120,55,25,.4)}
+
+/* ask + permission cards sit above the composer */
+#askMenu,#permMenu{position:absolute;bottom:calc(100% + 10px);left:0;right:0;
+  background:linear-gradient(165deg,rgba(255,255,255,.28),rgba(255,255,255,.13));
+  backdrop-filter:blur(36px) saturate(1.7);border:1px solid rgba(255,255,255,.42);border-radius:18px;
+  box-shadow:0 26px 60px rgba(120,55,25,.42);padding:14px}
+
+/* in-textbox capsule mode chip — warm */
+#modeChip.modechip{background:color-mix(in srgb,var(--mc) 40%,#7a3a22);border-color:color-mix(in srgb,var(--mc) 70%,transparent)}
+
+/* ============ voice persona picker (Settings -> Voice & tone) ============ */
+.voicegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-bottom:8px}
+.voicecard{position:relative;border-radius:14px;padding:11px 12px;cursor:pointer;text-align:left;
+  background:rgba(255,255,255,.12);border:1px solid var(--line2);transition:background .14s,transform .12s}
+.voicecard:hover{background:rgba(255,255,255,.2);transform:translateY(-1px)}
+.voicecard.sel{background:rgba(255,255,255,.26);border-color:#fff;box-shadow:0 0 0 1px #fff inset}
+.voicecard .vcname{font-weight:800;font-size:14px;color:#fff}
+.voicecard .vctag{font-size:11.5px;color:rgba(255,255,255,.74);margin-top:2px}
+.voicecard .vcplay{position:absolute;top:9px;right:9px;width:24px;height:24px;border-radius:50%;
+  background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:11px;color:#fff}
+.voicecard .vcplay:hover{background:#fff;color:#7a3a22}
+
+/* ============ connector Auth button + status (Settings) ============ */
+.connauth{font-size:12px;background:#fff;color:#7a3a22;font-weight:700;border-radius:9px;padding:7px 14px;margin-left:8px}
+.connauth:hover{transform:translateY(-1px)}
+.connauth.busy{opacity:.7;pointer-events:none}
+.authmsg{font-size:12px;margin-top:8px;border-radius:9px;padding:8px 11px;line-height:1.4;background:rgba(255,255,255,.12);border:1px solid var(--line2);color:var(--soft);white-space:pre-wrap}
+.authmsg.ok{background:rgba(143,209,122,.18);border-color:rgba(143,209,122,.5);color:#eafff0}
+.authmsg.bad{background:rgba(255,138,122,.16);border-color:rgba(255,138,122,.5);color:#ffe3dd}
+.provrow .prow-actions{display:flex;align-items:center;gap:0;margin-top:9px;flex-wrap:wrap}
+
+/* ============ responsive ============ */
+@media (max-width:760px){
+  #composer{width:96vw;bottom:14px}
+  #stage{bottom:280px;top:64px}
+  .convtitle{font-size:24px;max-width:54vw}
+  #greeting{font-size:38px}
+  #metaRow,#modeRow{gap:9px;font-size:12px}
+}

@@ -1,0 +1,2 @@
+# Automate the desktop (Cowork-style)
+Use window (list/focus/snap) to set the stage, then the computer tool (screenshot -> click/type/hold/drag) to drive any app. Verify by screenshot. Wait for things to load with action='wait'.

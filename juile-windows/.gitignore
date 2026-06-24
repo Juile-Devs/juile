@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+workspace/
+web/qr.png
+.venv/
+venv/
+.claude/

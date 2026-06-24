@@ -1,0 +1,11 @@
+# secrets & local runtime — never commit
+.env
+**/.env
+**/workspace/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.pyc
+**/web/qr.png
+**/.claude/
+*.bak-*
