@@ -78,6 +78,18 @@ async def api_settings_post(request: Request):
     return store.save(await request.json())
 
 
+@app.get("/api/convos")
+async def api_convos_get():
+    return {"conversations": store.load().get("conversations", [])}
+
+
+@app.post("/api/convos")
+async def api_convos_post(request: Request):
+    data = await request.json()
+    store.save({"conversations": data.get("conversations", [])})
+    return {"ok": True}
+
+
 @app.post("/api/title")
 async def api_title(request: Request):
     """Let Juile name a conversation from its first exchange (2-4 words)."""

@@ -507,7 +507,18 @@ const Convos = (() => {
   let list = [], activeId = null;
   const T = () => document.querySelector("#transcript");
   function load() { try { list = JSON.parse(localStorage.getItem(LS)) || []; } catch { list = []; } activeId = localStorage.getItem(LSA); }
-  function persist() { localStorage.setItem(LS, JSON.stringify(list)); if (activeId) localStorage.setItem(LSA, activeId); }
+  function persist() { localStorage.setItem(LS, JSON.stringify(list)); if (activeId) localStorage.setItem(LSA, activeId); serverSave(); }
+  let _saveT;
+  function serverSave() { clearTimeout(_saveT); _saveT = setTimeout(() => { try { fetch("/api/convos", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ conversations: list }) }); } catch {} }, 500); }
+  async function nameWithAI(c) {
+    if (!c || c._naming) return; c._naming = true;
+    try {
+      const r = await fetch("/api/title", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provider: settings.provider, model: settings.model, messages: (c.msgs || []).slice(0, 2).map((m) => ({ role: m.role, content: m.text })) }) });
+      const j = await r.json();
+      if (j.title) { c.name = j.title; c.named = true; persist(); setPill(c.name); if (window.renderConvPanel) window.renderConvPanel(); }
+    } catch {}
+    c._naming = false;
+  }
   function active() { return list.find((c) => c.id === activeId); }
   function uid() { return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function setPill(name) { const t = document.querySelector("#greetingText"); if (t) t.textContent = name || "New Conversation"; }
@@ -529,7 +540,7 @@ const Convos = (() => {
   function deriveTitle(t) { t = (t || "").replace(/\s+/g, " ").trim(); const w = t.split(" ").slice(0, 6).join(" "); return ((w.charAt(0).toUpperCase() + w.slice(1)).slice(0, 42)) || "New Conversation"; }
   function onUser(text) {
     ensure(); const c = active(); c.msgs.push({ role: "user", text: text || "" });
-    if (!c.named && c.name === "New Conversation" && (text || "").trim()) { c.name = deriveTitle(text); setPill(c.name); if (window.renderConvPanel) window.renderConvPanel(); }
+    if (!c.named && c.name === "New Conversation" && (text || "").trim()) { setPill("Naming…"); nameWithAI(c); }
     persist(); return c.msgs.length - 1;
   }
   function len() { const c = active(); return c ? c.msgs.length : 0; }
@@ -561,7 +572,21 @@ const Convos = (() => {
     document.querySelector("#bar").appendChild(menu);
     setTimeout(() => document.addEventListener("click", closeMenu), 0);
   }
-  function init() { load(); ensure(); const c = active(); if (c && c.msgs.length) renderT(c); }
+  function init() {
+    load(); ensure(); const c = active(); if (c && c.msgs.length) renderT(c);
+    (async () => {
+      try {
+        const r = await fetch("/api/convos"); const j = await r.json();
+        if (j && j.conversations && j.conversations.length) {
+          list = j.conversations;
+          if (!active()) activeId = (list[0] || {}).id || activeId;
+          localStorage.setItem(LS, JSON.stringify(list));
+          setPill((active() || {}).name); const a = active(); if (a) renderT(a);
+          if (window.renderConvPanel) window.renderConvPanel();
+        }
+      } catch {}
+    })();
+  }
   function syncServer() { const c = active(); if (c) sendLoad(c.msgs); }
   return { init, onUser, onAssistant, toggleMenu, newConversation, switchTo, remove, appendAssistantTo, list: () => list, activeId: () => activeId, syncServer, len, msgAt, rewindTo };
 })();

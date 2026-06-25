@@ -21,6 +21,7 @@ DEFAULT = {
     "local_focus": "",         # the one folder Juile should focus on (general "Local" if blank)
     "github_repo": "",         # active GitHub repo (owner/name) Juile reads & acts on
     "connectors": [],          # custom MCP: [{name, url, header_name, header_value}]
+    "conversations": [],       # saved chat history (server-side persistence)
     "provider_keys": {},       # {providerKey: {field: value}}  (bring-your-own-key)
     "mcp": {                   # built-in integrations: {name: {url?, api_key?}}
         "composio": {"url": "", "api_key": ""},
