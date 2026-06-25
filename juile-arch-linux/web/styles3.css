@@ -52,19 +52,18 @@ body:not(.chatting) .convtitle{opacity:0;pointer-events:none}
 #stage{position:fixed;left:0;right:0;top:74px;bottom:236px;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-end;pointer-events:none}
 #transcript{pointer-events:auto;width:min(720px,92vw);max-height:100%;overflow-y:auto;
-  display:flex;flex-direction:column;gap:14px;padding:8px 4px 30px;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 70px),transparent 100%);
-  mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 70px),transparent 100%);
-  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.4) transparent}
-#transcript::-webkit-scrollbar{width:7px}
-#transcript::-webkit-scrollbar-thumb{background:rgba(255,255,255,.35);border-radius:6px}
+  display:flex;flex-direction:column;gap:14px;padding:8px 4px 132px;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 120px),transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0,#000 42px,#000 calc(100% - 120px),transparent 100%);
+  scrollbar-width:none;-ms-overflow-style:none}
+#transcript::-webkit-scrollbar{width:0;height:0;display:none}
 
 /* presence orbs — centered, shift down + shrink while chatting */
 #circles{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:46px;height:300px;z-index:1;
   transition:top .6s cubic-bezier(.2,.85,.3,1),transform .6s cubic-bezier(.2,.85,.3,1)}
 .circle{width:108px;height:108px;border-radius:54px;background:#fff;flex:none;will-change:height;transition:height .07s ease-out;
   box-shadow:0 14px 50px rgba(255,240,225,.4),inset 0 -8px 22px rgba(255,200,150,.4),inset 0 7px 16px rgba(255,255,255,.85)}
-body.chatting #circles{top:64%;transform:translate(-50%,-50%) scale(.52);opacity:.92}
+body.chatting #circles{top:67%;transform:translate(-50%,-50%) scale(.38);opacity:.9}
 @media (max-height:760px){body.chatting #circles{top:60%;transform:translate(-50%,-50%) scale(.42)}}
 
 /* empty-state greeting (Young Serif, under the orbs) */
