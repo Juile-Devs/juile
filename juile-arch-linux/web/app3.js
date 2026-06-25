@@ -80,6 +80,18 @@ function toast(msg) {
   settings.section = cur; paint();
 })();
 
+/* ---- left sidebar actions (New Conversation + coming-soon sections) ---- */
+(function () {
+  const SOON = { playground: "Playground is coming soon", workspaces: "Workspaces is coming soon", projects: "Projects is coming soon", automations: "Automations is coming soon", pulse: "Pulse is coming soon", rss: "RSS is coming soon" };
+  document.querySelectorAll("#convPanel .sbAct").forEach((b) => {
+    b.onclick = () => {
+      const a = b.dataset.act;
+      if (a === "new") { if (window.Convos) { Convos.newConversation(); if (window.renderConvPanel) renderConvPanel(); } return; }
+      if (typeof toast === "function") toast(SOON[a] || "Coming soon");
+    };
+  });
+})();
+
 /* ---- Agents View (left arrow): list agents/conversations, click to open, type to summon ---- */
 let agentsOpen = false;
 function agentStatus(c) {

@@ -85,6 +85,41 @@ body.chatting #greeting{opacity:0}
 
 /* ============ composer ============ */
 #composer{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:min(720px,94vw);z-index:5}
+
+/* ============ permanent left sidebar (redesign) ============ */
+:root{--sbw:290px}
+#convPanel{transform:none!important;width:var(--sbw);top:0;left:0;bottom:0;padding:18px 12px 14px;
+  background:linear-gradient(168deg,rgba(255,150,120,.32),rgba(243,118,108,.18) 42%,rgba(220,170,110,.10));
+  backdrop-filter:blur(42px) saturate(1.6);-webkit-backdrop-filter:blur(42px) saturate(1.6);
+  border-right:1px solid rgba(255,255,255,.22);box-shadow:8px 0 50px rgba(150,70,40,.34);
+  display:flex;flex-direction:column;gap:4px;z-index:8;transition:none}
+.sbBrand{display:flex;align-items:center;gap:9px;padding:2px 8px 12px;font-family:var(--serif);font-size:21px;color:#fff}
+.sbBrand img{width:24px;height:24px;border-radius:7px;object-fit:cover}
+.sbActions{display:flex;flex-direction:column;gap:1px;padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.16)}
+.sbAct{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:11px;color:rgba(255,255,255,.92);font-size:14px;font-weight:600;background:none;border:none;transition:background .14s}
+.sbAct:hover{background:rgba(255,255,255,.17)}
+.sbAct svg{width:18px;height:18px;flex:none;fill:none;stroke:#fff;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+.sbAct span{flex:1;text-align:right}
+#convPanelList{display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:none}
+#convPanelList::-webkit-scrollbar{width:0;display:none}
+.convrow{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:11px;cursor:pointer;color:rgba(255,255,255,.86);font-size:13.5px;transition:background .14s}
+.convrow:hover{background:rgba(255,255,255,.15)}
+.convrow.active{background:rgba(255,255,255,.22);color:#fff}
+.convrow .convbub{width:17px;height:17px;flex:none;display:grid;place-items:center}
+.convrow .convbub svg{width:16px;height:16px;fill:none;stroke:rgba(255,255,255,.8);stroke-width:1.8}
+.convrow .convrowname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+.convrow .convrowdel{flex:none;color:rgba(255,255,255,.55);opacity:0;background:none;font-size:12px}
+.convrow:hover .convrowdel{opacity:.8}
+.convrow .convrowdel:hover{color:var(--bad);opacity:1}
+.convrow .convrun{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none;animation:rpulse 1.4s infinite}
+/* shift main content to the right of the sidebar */
+#stage{left:var(--sbw)}
+#composer{left:calc(50% + var(--sbw) / 2)}
+#circles{left:calc(50% + var(--sbw) / 2)}
+#topnav{left:calc(50% + var(--sbw) / 2)}
+#topbar{left:calc(var(--sbw) + 20px)}
+#bottomLeft{left:calc(var(--sbw) + 24px)}
+@media (max-width:640px){:root{--sbw:0px}#convPanel{transform:translateX(-110%)!important}#topbar{left:22px}#bottomLeft{left:24px}#stage{left:0}#composer,#circles,#topnav{left:50%}}
 #composer #jstatus{margin:0 4px 10px}
 #composer #queue:not(:empty){margin-bottom:10px}
 .cbox{border-radius:28px;padding:14px 16px 13px;position:relative;

@@ -600,6 +600,8 @@ function renderConvPanel() {
     const running = window._running && window._running.has(c.id);
     const row = el("div", "convrow" + (c.id === aid ? " active" : ""));
     if (running) row.appendChild(el("span", "convrun"));
+    const _bub = el("span", "convbub"); _bub.innerHTML = '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>';
+    row.appendChild(_bub);
     row.appendChild(el("span", "convrowname", c.name || "New Conversation"));
     const del = el("button", "convrowdel", "✕"); del.title = "Delete";
     del.onclick = (e) => { e.stopPropagation(); Convos.remove(c.id); renderConvPanel(); };
